@@ -5,7 +5,7 @@
 import { createClient, RedisClientType } from 'redis';
 import { logger } from '../utils/logger';
 import { config } from './environment';
-import { create } from 'domain';
+
 
 // ============================================================================
 // REDIS CLIENT
