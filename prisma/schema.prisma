@@ -1,1 +1,254 @@
-gwergvwaerg
+// crefin database schema
+// ============================================================================
+// PRISMA CONFIGURATION
+// ============================================================================
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql" //using postgresql
+    url = env("DATABASE_URL")  //read from .env
+}
+
+// ============================================================================
+// USERS (Authentication + Profile)
+// ============================================================================
+
+model User {
+    id        String     @id @default(uuid())
+    email     String     @unique
+    password  String
+
+    //profile info
+    firstName     String
+    lastName      String
+    profession    String?
+    skills        String[]
+    hourlyRate    Decimal?  @db.Decimal(10, 2)
+
+    //account status
+    isVerified          Boolean @default(false) //email verified?
+    isPremium           Boolean @default(false) //premium account?
+    premiumExpiry       DateTime?
+
+    //Timestamps
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    lastLoginAt     DateTime?
+
+    //relations (one user has many.....)
+    refreshTokens     RefreshToken[]
+    payments          Payment[]
+    incomeLogs        IncomeLog[]
+    expenseLogs       ExpenseLog[]
+    alerts            Alert[]
+    premiumPayments   PremiumPayment[]
+
+    @@index([email])
+    @@map("users")
+}
+
+// ============================================================================
+// REFRESH TOKENS (JWT Sessions)
+// ============================================================================
+model RefreshToken {
+    id String @id @default(uuid())
+    token String @unique
+    userId String                   //token's owner
+    expiresAt DateTime          //expiry date
+    createdAt DateTime @default(now())
+
+    //relation 
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([token])
+    @@map("refresh_tokens")
+}
+
+// ============================================================================
+// MARKET RATES (Cached from Upwork/Fiverr)
+// ============================================================================
+model MarketRate {
+    id String @id @default(uuid())
+    skill String
+    category String?
+
+    //rate data
+    rateMin Decimal @db.Decimal(10, 2)
+    rateMax Decimal @db.Decimal(10, 2)
+    rateAvg Decimal @db.Decimal(10, 2)
+    currency String @default("USD") 
+
+    //Metadata
+    source String //e.g upwork, fiverr etc
+    region String @default("US") //us, uk, eu
+    sampleSize Int @default(0) //number of jobs analyzed
+    confidence Decimal @db.Decimal(3, 2) @default(0.00) //0.0 - 1.0 reliability score
+
+    //Timestamps
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt  //updated every 20 min by a background job
+
+    @@unique([skill, region, source]) //one rate per skill+region+source combo
+    @@index([skill, region])
+    @@map("market_rates")
+}
+
+// ============================================================================
+// PAYMENTS (Sent/Received Money)
+// ============================================================================
+enum PaymentDirection {
+    SENT //user paid someone
+    RECEIVED //User received money
+}
+
+model Payment {
+    id String @id @default(uuid())
+    userId String  //who's logging this payment
+
+    //payment details
+    amount Decimal @db.Decimal(10, 2)
+    direction PaymentDirection //sent or recieved
+    counterpartyName String? //client or freelancer name
+    counterPartyEmail String? 
+    status String //pending, completed. failed
+
+    //escrow 
+    escrowEnabled Boolean @default(false)
+    escrowReleasedAt DateTime?
+
+    //External integration
+    paymentMethod String? //venmo, paypal, stripe
+    externalTxId String? //external transaction id
+
+    //metadata
+    memo String? //optional note
+    feeAmount Decimal? @db.Decimal(10, 2)
+
+    //timestamps
+    paymentDate DateTime @default(now())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    //Relation
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId,status])
+    @@index([paymentDate])
+    @@map("payments")
+}
+
+// ============================================================================
+// INCOME LOGS (Gigs/Projects Completed)
+// ============================================================================
+
+model IncomeLog {
+    id          String   @id @default(uuid())
+    userId      String
+    
+    // Income details
+    amount      Decimal  @db.Decimal(10, 2)
+    projectName String?
+    clientName  String?
+    skill       String?                     // What skill was this for?
+    hours       Decimal? @db.Decimal(5, 2)  // Hours worked
+    ratePerHour Decimal? @db.Decimal(10, 2) // Effective hourly rate
+  
+    // Metadata
+    source      String   @default("manual") // "manual", "voice"
+    notes       String?
+    
+    // Timestamps
+    loggedAt    DateTime @default(now())
+    createdAt   DateTime @default(now())
+    
+    // Relation
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId, loggedAt])
+    @@map("income_logs")
+}
+// ============================================================================
+// EXPENSE LOGS (Business Expenses)
+// ============================================================================
+
+model ExpenseLog {
+    id           String   @id @default(uuid())
+    userId       String
+    
+    // Expense details
+    amount       Decimal  @db.Decimal(10, 2)
+    category     String   // "software", "equipment", "marketing", "travel"
+    description  String
+    isDeductible Boolean  @default(true)    // Tax deductible?
+    
+    // Supporting docs
+    receiptUrl   String?
+    
+    // Timestamps
+    loggedAt     DateTime @default(now())
+    createdAt    DateTime @default(now())
+    
+    // Relation
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId, loggedAt])
+    @@map("expense_logs")
+}
+
+// ============================================================================
+// ALERTS (AI-Generated Insights)
+// ============================================================================
+model Alert {
+    id          String   @id @default(uuid())
+    userId      String
+    
+    // Alert details
+    type        String   // "underpriced", "tax_due", "expense_opportunity"
+    severity    String   // "low", "medium", "high"
+    title       String
+    description String
+    actionUrl   String?
+    
+    // Status
+    dismissed   Boolean  @default(false)
+    dismissedAt DateTime?
+    
+    // Timestamps
+    createdAt   DateTime @default(now())
+    
+    // Relation
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId, dismissed])
+    @@map("alerts")
+}
+
+// ============================================================================
+// PREMIUM PAYMENTS (Subscription History)
+// ============================================================================
+model PremiumPayment {
+    id                 String   @id @default(uuid())
+    userId             String
+    
+    // Payment details
+    amount             Decimal  @db.Decimal(10, 2)  // $4.99
+    stripePaymentId    String?  @unique
+    status             String   // "succeeded", "failed", "refunded"
+    
+    // Billing period
+    billingPeriodStart DateTime
+    billingPeriodEnd   DateTime
+    
+    // Timestamps
+    createdAt          DateTime @default(now())
+    
+    // Relation
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId, status])
+    @@map("premium_payments")
+}
