@@ -21,6 +21,7 @@ const prisma = new PrismaClient({
 // CONNECTION MANAGEMENT
 // ============================================================================
 class DatabaseConnection {
+    private isConnected: boolean = false;
     /*connect to database*/
     async connect(): Promise<void> {
         try {
