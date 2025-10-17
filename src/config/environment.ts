@@ -6,7 +6,7 @@ dotenv.config();
 
 const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    PORT: z.string().transform(Number).default('3000'),
+    PORT: z.coerce.number().default(3000),
     API_VERSION: z.string().default('v1'),
     APP_URL: z.string().url(),
     CLIENT_URL: z.string().url(),
@@ -15,8 +15,8 @@ const envSchema = z.object({
     DATABASE_URL : z.string().min(1, 'DATABASE_URL is required'),
 
     //redis
-    REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
-    REDIS_TTL: z.string().transform(Number).default('900'),
+    REDIS_URL: z.string().default('redis://localhost:6379'),
+    REDIS_TTL: z.coerce.number().default(900),
 
     // JWT - Must be 32+ characters for security
     JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
@@ -25,9 +25,9 @@ const envSchema = z.object({
     JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
     // Rate Limiting
-    RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'), // 15 minutes in milliseconds
-    RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
-    RATE_LIMIT_PREMIUM_MAX: z.string().transform(Number).default('1000'),
+    RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000), // 15 minutes in milliseconds
+    RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
+    RATE_LIMIT_PREMIUM_MAX: z.coerce.number().default(1000),
     
     // External APIs (optional for MVP)
     UPWORK_CLIENT_ID: z.string().optional(),
@@ -36,11 +36,11 @@ const envSchema = z.object({
 
     // Security
     CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
-    BCRYPT_ROUNDS: z.string().transform(Number).default('10'),
+    BCRYPT_ROUNDS: z.coerce.number().default(10),
     
     // Feature Flags
-    ENABLE_AI_FEATURES: z.string().transform(val => val === 'true').default('false'),
-    ENABLE_PAYMENTS: z.string().transform(val => val === 'true').default('false'),
+    ENABLE_AI_FEATURES: z.string().default('false').transform(val => val === 'true'),
+    ENABLE_PAYMENTS: z.string().default('false').transform(val => val === 'true'),
     
     // Logging
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
