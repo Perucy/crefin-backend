@@ -22,16 +22,22 @@ model User {
     password  String
 
     //profile info
-    firstName     String
-    lastName      String
+    name          String
+    phone         String?
+    profilePicture String?
     profession    String?
     skills        String[]
     hourlyRate    Decimal?  @db.Decimal(10, 2)
 
     //account status
-    isVerified          Boolean @default(false) //email verified?
+    isEmailVerified          Boolean @default(false) //email verified?
     isPremium           Boolean @default(false) //premium account?
     premiumExpiry       DateTime?
+
+    emailVerificationToken   String?
+    emailVerificationExpires DateTime?
+    passwordResetToken       String?
+    passwordResetExpires     DateTime?
 
     //Timestamps
     createdAt       DateTime @default(now())
