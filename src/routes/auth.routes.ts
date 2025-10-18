@@ -7,6 +7,7 @@ import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
 import { validate } from '../middleware/validator';
 import { authRateLimiter } from '../middleware/rateLimiter';
+import { authenticate } from '../middleware/auth';
 import { z } from 'zod';
 
 const router = Router();
@@ -121,13 +122,13 @@ router.post('/refresh-token', validate(refreshTokenSchema), authController.refre
  * @desc    Logout user
  * @access  Private
  */
-router.post('/logout', authController.logout);
+router.post('/logout', authenticate, authController.logout);
 
 /**
  * @route   GET /api/v1/auth/me
  * @desc    Get current user
  * @access  Private
  */
-router.get('/me', authController.getCurrentUser);
+router.get('/me', authenticate, authController.getCurrentUser);
 
 export default router;
