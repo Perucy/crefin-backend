@@ -25,15 +25,16 @@ export interface TokenPayload {
  * Sent with every API request
  */
 export function generateAccessToken(payload: TokenPayload): string {
-    return jwt.sign(
-        payload, 
-        config.JWT_SECRET as jwt.Secret, 
-        {
-            expiresIn: config.JWT_EXPIRES_IN,
-            issuer: 'crefin-api',
-            audience: 'crefin-app',
-        } as jwt.SignOptions  
-    );
+    const secret = config.JWT_SECRET;
+    const options = {
+        expiresIn: config.JWT_EXPIRES_IN,
+        issuer: 'crefin-api',
+        audience: 'crefin-app',
+    };
+    
+    const token = jwt.sign(payload, secret, options);
+
+    return token;
 }
 
 /**
@@ -41,15 +42,16 @@ export function generateAccessToken(payload: TokenPayload): string {
  * Used to get new access tokens
  */
 export function generateRefreshToken(payload: TokenPayload): string {
-    return jwt.sign(
-        payload, 
-        config.JWT_REFRESH_SECRET as jwt.Secret,  // ✅ Fixed: Use JWT_REFRESH_SECRET
-        {
-            expiresIn: config.JWT_REFRESH_EXPIRES_IN,
-            issuer: 'crefin-api',
-            audience: 'crefin-app',
-        } as jwt.SignOptions  
-    );
+    const secret = config.JWT_REFRESH_SECRET;
+    const options = {
+        expiresIn: config.JWT_REFRESH_EXPIRES_IN,
+        issuer: 'crefin-api',
+        audience: 'crefin-app',
+    };
+    
+    const token = jwt.sign(payload, secret, options);
+
+    return token;
 }
 
 /**
@@ -80,6 +82,8 @@ export function verifyAccessToken(token: string): TokenPayload {
         
         return decoded;
     } catch (error) {
+        // Debug: Log the actual error
+        console.log('JWT Verification Error:', error);
         if (error instanceof jwt.TokenExpiredError) {
             throw new UnauthorizedError('Access token expired');
         }
