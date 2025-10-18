@@ -24,6 +24,7 @@ import {
     NotFoundError,
 } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { generateTokenPair } from '../utils/jwt';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -35,24 +36,6 @@ import { logger } from '../utils/logger';
 const sanitizeUser = (user: User):SafeUser => {
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = user;
     return safeUser as SafeUser;
-};
-
-/**
- * Generate JWT access token (expires in 1 hour)
- */
-const generateAccessToken = (payload: TokenPayload):string => {
-    return jwt.sign(payload, config.JWT_SECRET, {
-        expiresIn: '1h',
-    });
-};
-
-/**
- * Generate JWT refresh token (expires in 7 days)
- */
-const generateRefreshToken = (payload: TokenPayload): string => {
-    return jwt.sign(payload, config.JWT_REFRESH_SECRET, {
-        expiresIn: '7d',
-    });
 };
 
 /**
@@ -122,8 +105,7 @@ export const register = async (data: RegisterRequest): Promise<AuthResult> => {
             isPremium: user.isPremium,
         };
 
-        const accessToken = generateAccessToken(tokenPayload);
-        const refreshToken = generateRefreshToken(tokenPayload);
+        const { accessToken, refreshToken } = generateTokenPair(tokenPayload);
 
         // store refresh token
         await storeRefreshToken(user.id, refreshToken);
@@ -179,8 +161,7 @@ export const login = async (data: LoginRequest): Promise<AuthResult> => {
             isPremium: user.isPremium,
         };
 
-        const accessToken = generateAccessToken(tokenPayload);
-        const refreshToken = generateRefreshToken(tokenPayload);
+        const { accessToken, refreshToken } = generateTokenPair(tokenPayload);
 
         //store refresh token
         await storeRefreshToken(user.id, refreshToken);
@@ -405,8 +386,7 @@ export const refreshAccessToken = async (refreshToken: string): Promise<{ token:
             isPremium: user.isPremium,
         };
 
-        const newAccessToken = generateAccessToken(tokenPayload);
-        const newRefreshToken = generateRefreshToken(tokenPayload);
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokenPair(tokenPayload);
 
         // Store new refresh token
         await storeRefreshToken(user.id, newRefreshToken);
