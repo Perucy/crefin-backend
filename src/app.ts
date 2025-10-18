@@ -10,12 +10,15 @@ import { config, corsOrigins } from './config/environment';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
+import authRoutes from './routes/auth.routes';
 
 // ============================================================================
 // CREATE EXPRESS APP
 // ============================================================================
 
 const app: Application = express();
+
+const API_PREFIX = `/api/${config.API_VERSION}`;
 
 // ============================================================================
 // SECURITY MIDDLEWARE
@@ -74,7 +77,7 @@ app.use('/api', rateLimiter);
 // ============================================================================
 
 // Simple endpoint to check if API is running
-app.get('/health', (req: Request, res: Response) => {
+app.get(`${API_PREFIX}/health`, (req: Request, res: Response) => {
     res.status(200).json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -97,10 +100,8 @@ app.get('/', (req: Request, res: Response) => {
 // API ROUTES
 // ============================================================================
 
-const API_PREFIX = `/api/${config.API_VERSION}`;
-
 // Auth routes
-// app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/auth`, authRoutes);
 
 // Rate routes (future)
 // app.use(`${API_PREFIX}/rates`, rateRoutes);
