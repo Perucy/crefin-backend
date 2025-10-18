@@ -32,11 +32,27 @@ export class BadRequestError extends ApiError {
     }
 }
 
+// 400 Validation Error - Specific type for validation failures
+export class ValidationError extends ApiError {
+    constructor(message: string, details?: any) {
+        super(400, message, 'VALIDATION_ERROR', details);
+        this.name = 'ValidationError';
+    }
+}
+
 // 401 Unauthorized - Not authenticated (no token or invalid token)
 export class UnauthorizedError extends ApiError {
     constructor(message: string = 'Authentication required') {
         super(401, message, 'UNAUTHORIZED');
         this.name = 'UnauthorizedError';
+    }
+}
+
+// 401 Authentication Error - Specific type for failed login/auth
+export class AuthenticationError extends ApiError {
+    constructor(message: string = 'Authentication failed') {
+        super(401, message, 'AUTHENTICATION_FAILED');
+        this.name = 'AuthenticationError';
     }
 }
 
