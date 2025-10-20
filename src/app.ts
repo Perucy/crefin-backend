@@ -11,6 +11,7 @@ import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 
 // ============================================================================
 // CREATE EXPRESS APP
@@ -102,6 +103,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // Auth routes
 app.use(`${API_PREFIX}/auth`, authRoutes);
+
+//user routes
+app.use(`${API_PREFIX}/users`, userRoutes);
 
 // Rate routes (future)
 // app.use(`${API_PREFIX}/rates`, rateRoutes);
