@@ -130,6 +130,11 @@ model Payment {
     paymentMethod String? //venmo, paypal, stripe
     externalTxId String? //external transaction id
 
+    // Links (ONE payment can link to ONE income OR expense)
+    incomeLogId String?
+    expenseLogId String?
+    
+
     //metadata
     memo String? //optional note
     feeAmount Decimal? @db.Decimal(10, 2)
@@ -139,8 +144,11 @@ model Payment {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+
     //Relation
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    incomeLog IncomeLog? @relation(fields: [incomeLogId], references: [id])
+    expenseLog ExpenseLog? @relation(fields: [expenseLogId], references: [id])
 
     @@index([userId,status])
     @@index([paymentDate])
@@ -162,6 +170,9 @@ model IncomeLog {
     skill       String?                     // What skill was this for?
     hours       Decimal? @db.Decimal(5, 2)  // Hours worked
     ratePerHour Decimal? @db.Decimal(10, 2) // Effective hourly rate
+
+    // Link back to payment (if exists)
+    payments Payment[]  // One income can have multiple payments (installments)
   
     // Metadata
     source      String   @default("manual") // "manual", "voice"
@@ -190,6 +201,9 @@ model ExpenseLog {
     category     String   // "software", "equipment", "marketing", "travel"
     description  String
     isDeductible Boolean  @default(true)    // Tax deductible?
+
+    // Link back to payment (if exists)
+    payments Payment[]  // One expense can have multiple payments
     
     // Supporting docs
     receiptUrl   String?
