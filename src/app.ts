@@ -14,6 +14,8 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import incomeRoutes from './routes/income.routes';
 import expenseRoutes from './routes/expense.routes';
+import goalRoutes from './routes/goal.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 // ============================================================================
 // CREATE EXPRESS APP
@@ -114,6 +116,12 @@ app.use(`${API_PREFIX}/users`, userRoutes);
 
 // Payment routes (future)
 // app.use(`${API_PREFIX}/payments`, paymentRoutes);
+
+// dashboard routes
+app.use(`${API_PREFIX}/dashboard`, dashboardRoutes);
+
+// Goal routes
+app.use(`${API_PREFIX}/goals`, goalRoutes);
 
 // Income routes (future)
 app.use(`${API_PREFIX}/income`, incomeRoutes);
