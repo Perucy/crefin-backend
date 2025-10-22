@@ -3,12 +3,14 @@
  * Defines data structures for expense tracking
  */
 
+import { Decimal } from "@prisma/client/runtime/library";
+
 // ============================================================================
 // LOG EXPENSE
 // ============================================================================
 
 export interface LogExpenseRequest {
-    amount: number;
+    amount: Decimal;
     category: string;
     description: string;
     isDeductible?: boolean;
@@ -28,7 +30,7 @@ export interface LogExpenseResponse {
 export interface ExpenseLog {
     id: string;
     userId: string;
-    amount: number;
+    amount: Decimal;
     category: string;
     description: string;
     isDeductible: boolean;
