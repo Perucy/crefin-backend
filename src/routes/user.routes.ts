@@ -7,7 +7,6 @@ import * as userController from '../controllers/user.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validator';
 import { z } from 'zod';
-import { getProfile } from '@services/user.service';
 
 const router = Router();
 
