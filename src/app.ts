@@ -12,6 +12,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
+import incomeRoutes from './routes/income.routes';
+import expenseRoutes from './routes/expense.routes';
 
 // ============================================================================
 // CREATE EXPRESS APP
@@ -114,10 +116,10 @@ app.use(`${API_PREFIX}/users`, userRoutes);
 // app.use(`${API_PREFIX}/payments`, paymentRoutes);
 
 // Income routes (future)
-// app.use(`${API_PREFIX}/income`, incomeRoutes);
+app.use(`${API_PREFIX}/income`, incomeRoutes);
 
 // Expense routes (future)
-// app.use(`${API_PREFIX}/expenses`, expenseRoutes);
+app.use(`${API_PREFIX}/expenses`, expenseRoutes);
 
 // AI auditor routes (future)
 // app.use(`${API_PREFIX}/auditor`, auditorRoutes);
