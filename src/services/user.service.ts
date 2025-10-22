@@ -20,7 +20,6 @@ import {
     ValidationError,
 } from '../utils/errors';
 import { logger } from '../utils/logger';
-import { email } from 'zod';
 
 // ============================================================================
 // HELPER FUNCTIONS
