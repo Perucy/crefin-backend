@@ -51,6 +51,7 @@ model User {
     expenseLogs       ExpenseLog[]
     alerts            Alert[]
     premiumPayments   PremiumPayment[]
+    goals             Goal[]
 
     @@index([email])
     @@map("users")
@@ -271,4 +272,30 @@ model PremiumPayment {
     
     @@index([userId, status])
     @@map("premium_payments")
+}
+
+// ============================================================================
+// GOALS (Financial Goals)
+// ============================================================================
+model Goal {
+    id            String   @id @default(uuid())
+    userId        String
+    
+    // Goal details
+    title         String
+    category      String   // "travel", "real-estate", "education", etc.
+    targetAmount  Decimal  @db.Decimal(10, 2)
+    currentAmount Decimal  @db.Decimal(10, 2) @default(0)
+    deadline      DateTime?
+    description   String?
+    
+    // Timestamps
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    
+    // Relation
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId])
+    @@map("goals")
 }
