@@ -514,7 +514,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**Perucy
+**Perucy**
 - GitHub: [@perucy](https://github.com/perucy)
 
 ---
