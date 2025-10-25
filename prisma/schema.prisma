@@ -52,6 +52,7 @@ model User {
     alerts            Alert[]
     premiumPayments   PremiumPayment[]
     goals             Goal[]
+    clients           Client[]
 
     @@index([email])
     @@map("users")
@@ -168,6 +169,7 @@ model IncomeLog {
     amount      Decimal  @db.Decimal(10, 2)
     projectName String?
     clientName  String?
+    clientId    String?
     skill       String?                     // What skill was this for?
     hours       Decimal? @db.Decimal(5, 2)  // Hours worked
     ratePerHour Decimal? @db.Decimal(10, 2) // Effective hourly rate
@@ -185,6 +187,7 @@ model IncomeLog {
     
     // Relation
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    client Client? @relation(fields: [clientId], references: [id])
     
     @@index([userId, loggedAt])
     @@map("income_logs")
@@ -298,4 +301,31 @@ model Goal {
     
     @@index([userId])
     @@map("goals")
+}
+
+// ============================================================================
+// CLIENTS (Freelance Clients)
+// ============================================================================
+model Client {
+    id        String   @id @default(uuid())
+    userId    String
+    
+    // Client details
+    name      String
+    email     String?
+    phone     String?
+    company   String?
+    address   String?
+    notes     String?
+    
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    // Relations
+    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    incomeLogs IncomeLog[]  // One client can have many income entries
+    
+    @@index([userId])
+    @@map("clients")
 }
