@@ -12,6 +12,7 @@ export interface LogIncomeRequest {
     amount: Decimal;
     projectName?: string;
     clientName?: string;
+    clientId?: string;
     skill?: string;
     hours?: Decimal;
     ratePerHour?: Decimal;
@@ -35,6 +36,7 @@ export interface IncomeLog {
     amount: Decimal;
     projectName: string | null;
     clientName: string | null;
+    clientId: string | null;
     skill: string | null;
     hours: Decimal | null;
     ratePerHour: Decimal | null;
@@ -53,6 +55,7 @@ export interface GetIncomeQuery {
     endDate?: string;
     skill?: string;
     clientName?: string;
+    clientId?: string;
     limit?: number;
     offset?: number;
 }
@@ -87,6 +90,7 @@ export interface IncomeSummary {
     }>;
     topClients: Array<{
         clientName: string;
+        clientId: string | null;
         amount: number;
         count: number;
     }>;
