@@ -187,7 +187,7 @@ model IncomeLog {
     
     // Relation
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-    client Client? @relation(fields: [clientId], references: [id])
+    client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
     
     @@index([userId, loggedAt])
     @@map("income_logs")
