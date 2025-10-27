@@ -1,8 +1,3 @@
-/**
- * Income Routes
- * Defines API endpoints for income tracking
- */
-
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { validate, validateQuery } from '../middleware/validator';
@@ -17,13 +12,15 @@ const router = Router();
 
 export const logIncomeSchema = z.object({
     amount: z.number().positive('Amount must be positive'),
-    source: z.string().min(1, 'Source is required'),
-    description: z.string().min(1, 'Description is required'),
-    skill: z.string().optional(),
+    projectName: z.string().optional(),
     clientName: z.string().optional(),
+    clientId: z.string().uuid('Invalid client ID').optional(),
+    skill: z.string().optional(),
     hours: z.number().positive('Hours must be positive').optional(),
     ratePerHour: z.number().positive('Rate per hour must be positive').optional(),
-    loggedAt: z.string().datetime().optional().or(z.date().optional()),
+    source: z.enum(['manual', 'voice']).optional(),
+    notes: z.string().optional(),
+    loggedAt: z.string().datetime().or(z.date()).optional(),
 });
 
 export const getIncomeQuerySchema = z.object({
@@ -31,6 +28,7 @@ export const getIncomeQuerySchema = z.object({
     endDate: z.string().datetime().optional(),
     skill: z.string().optional(),
     clientName: z.string().optional(),
+    clientId: z.string().uuid('Invalid client ID').optional(),
     limit: z.string().regex(/^\d+$/).transform(Number).optional(),
     offset: z.string().regex(/^\d+$/).transform(Number).optional(),
 });
