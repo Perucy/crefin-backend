@@ -17,6 +17,7 @@ import expenseRoutes from './routes/expense.routes';
 import goalRoutes from './routes/goal.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import clientRoutes from './routes/client.routes';
+import invoiceRoutes from './routes/invoice.routes';
 
 // ============================================================================
 // CREATE EXPRESS APP
@@ -132,6 +133,9 @@ app.use(`${API_PREFIX}/expenses`, expenseRoutes);
 
 //client routes
 app.use(`${API_PREFIX}/clients`, clientRoutes);
+
+//invoice routes
+app.use(`${API_PREFIX}/invoices`, invoiceRoutes);
 
 // AI auditor routes (future)
 // app.use(`${API_PREFIX}/auditor`, auditorRoutes);
