@@ -53,6 +53,7 @@ model User {
     premiumPayments   PremiumPayment[]
     goals             Goal[]
     clients           Client[]
+    invoices         Invoice[]
 
     @@index([email])
     @@map("users")
@@ -188,7 +189,8 @@ model IncomeLog {
     // Relation
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
-    
+    invoice Invoice?
+
     @@index([userId, loggedAt])
     @@map("income_logs")
 }
@@ -325,7 +327,54 @@ model Client {
     // Relations
     user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
     incomeLogs IncomeLog[]  // One client can have many income entries
-    
+    invoices   Invoice[]    // One client can have many invoices    
+
     @@index([userId])
     @@map("clients")
+}
+
+// =====================================================================================
+// INVOICE
+// =====================================================================================
+model Invoice {
+    id            String   @id @default(uuid())
+    userId        String
+    clientId      String
+    
+    // Invoice identification
+    invoiceNumber String   @unique
+    
+    // Invoice details
+    amount        Decimal  @db.Decimal(10, 2)
+    description   String
+    items         Json?
+    
+    // Status tracking
+    status        String   @default("draft")
+    
+    // Dates
+    issueDate     DateTime @default(now())
+    dueDate       DateTime
+    paidDate      DateTime?
+    
+    // Payment tracking
+    incomeLogId   String?  @unique
+    
+    // Additional details
+    notes         String?
+    terms         String?  @default("Payment due within 30 days")
+    
+    // Timestamps
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    
+    // Relations
+    user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    client        Client     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+    incomeLog     IncomeLog? @relation(fields: [incomeLogId], references: [id])
+    
+    @@index([userId, status])
+    @@index([clientId])
+    @@index([invoiceNumber])
+    @@map("invoices")
 }
