@@ -3,6 +3,8 @@
  * Defines data structures for invoice tracking
  */
 
+import { Decimal } from "@prisma/client/runtime/library";
+
 // ============================================================================
 // INVOICE STATUSES
 // ============================================================================
