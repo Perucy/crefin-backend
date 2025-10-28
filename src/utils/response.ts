@@ -56,4 +56,4 @@ export const sendError = (
     }
 
     res.status(statusCode).json(response);
-}
+};
