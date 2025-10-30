@@ -166,16 +166,17 @@ export const downloadInvoicePDF = async (req: Request, res: Response, next: Next
         // Get invoice details
         const invoice = await invoiceService.getInvoiceById(userId, id);
         
-        // TODO: Generate PDF (we'll implement this next)
-        // For now, return a placeholder response
-        return res.status(501).json({
-            success: false,
-            message: 'PDF generation not yet implemented',
-            invoice: {
-                id: invoice.id,
-                invoiceNumber: invoice.invoiceNumber
-            }
-        });
+        // Generate PDF
+        const { generateInvoicePDF } = await import('../services/pdf.service');
+        const pdfBuffer = await generateInvoicePDF(invoice);
+        
+        // Set headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        // Send PDF
+        res.send(pdfBuffer);
     } catch (error) {
         next(error);
     }
