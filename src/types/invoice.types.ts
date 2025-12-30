@@ -160,11 +160,19 @@ export interface MarkInvoiceAsPaidResponse {
 // EMAIL TEMPLATE
 // ============================================================================
 
+// Add to your types file
 export interface InvoiceEmailTemplate {
   to: string;
   subject: string;
   body: string;
   pdfFilename: string;
+  pdfUrl: string;  
+  instructions: {  
+    step1: string;
+    step2: string;
+    step3: string;
+    step4: string;
+  };
 }
 
 // ============================================================================
