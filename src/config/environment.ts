@@ -29,10 +29,8 @@ const envSchema = z.object({
     RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
     RATE_LIMIT_PREMIUM_MAX: z.coerce.number().default(1000),
     
-    // External APIs (optional for MVP)
-    UPWORK_CLIENT_ID: z.string().optional(),
-    UPWORK_CLIENT_SECRET: z.string().optional(),
-    UPWORK_API_URL: z.string().url().optional(),
+    // ML Service
+    ML_API_URL: z.string().default('http://localhost:8000'),
 
     // Security
     CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
