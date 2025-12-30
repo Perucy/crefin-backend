@@ -468,12 +468,12 @@ export const getInvoiceEmailTemplate = async (
             });
         };
         
-        // Generate email body
-        const body = `Dear ${invoice.client.name},
+        // Clean email body - NO attachment reminders!
+        const body = `Hi ${invoice.client.name},
 
-            I hope this email finds you well.
+            I hope this email finds you well!
 
-            Please find attached invoice ${invoice.invoiceNumber} for the services rendered.
+            Please find attached invoice ${invoice.invoiceNumber} for the work completed.
 
             Invoice Details:
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -481,31 +481,46 @@ export const getInvoiceEmailTemplate = async (
             Amount:         $${Number(invoice.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             Invoice Date:   ${formatDate(invoice.issueDate)}
             Due Date:       ${formatDate(invoice.dueDate)}
-            Payment Terms:  ${invoice.terms}
+            Payment Terms:  ${invoice.terms || 'Net 30'}
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             Payment Options:
-            • Bank Transfer: [Your bank details]
-            • PayPal: ${invoice.user.email}
-            ${invoice.user.phone ? `• Phone: ${invoice.user.phone}` : ''}
+            - Bank Transfer: [Your bank details]
+            - PayPal: ${invoice.user.email}${invoice.user.phone ? `\n• Phone: ${invoice.user.phone}` : ''}
 
-            Please review the attached invoice and let me know if you have any questions. Payment is appreciated by the due date.
+            If you have any questions, feel free to reach out.
 
-            Thank you for your continued business!
+            Thank you for your business!
 
             Best regards,
             ${invoice.user.name}
-            ${invoice.user.email}
-            ${invoice.user.phone || ''}`;
+            ${invoice.user.email}`;
         
         return {
             to: invoice.client.email || '',
             subject: `Invoice ${invoice.invoiceNumber} from ${invoice.user.name}`,
             body,
-            pdfFilename: `invoice-${invoice.invoiceNumber}.pdf`
+            
+            // Metadata for frontend to use
+            pdfFilename: `Invoice-${invoice.invoiceNumber}.pdf`,
+            pdfUrl: `/api/invoices/${invoiceId}/download`,
+            
+            // Instructions for frontend (not shown in email)
+            instructions: {
+                step1: 'Download PDF automatically',
+                step2: 'Open email client with pre-filled template',
+                step3: 'Attach PDF from Downloads folder',
+                step4: 'Review and send email'
+            }
         };
+        
     } catch (error) {
-        logger.error('Failed to generate email template', { userId, invoiceId, error });
+        logger.error('Failed to generate email template', { 
+            action: 'get_invoice_email_template',
+            userId, 
+            invoiceId, 
+            error 
+        });
         throw error;
     }
 };
