@@ -9,7 +9,6 @@ generator client {
 
 datasource db {
     provider = "postgresql" //using postgresql
-    url = env("DATABASE_URL")  //read from .env
 }
 
 // ============================================================================
@@ -364,6 +363,11 @@ model Invoice {
     notes         String?
     terms         String?  @default("Payment due within 30 days")
     
+    // payment prediction
+    predictedPaymentDays   Float?
+    predictionConfidence   Float?
+    predictedPaymentDate   DateTime?
+
     // Timestamps
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
