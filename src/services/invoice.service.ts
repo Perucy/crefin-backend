@@ -18,18 +18,19 @@ import {
     InvoiceWithClient,
     InvoiceWithDetails,
     InvoiceEmailTemplate,
+    ClientStats
 } from '../types/invoice.types';
 import { NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
-import { Decimal } from '@prisma/client/runtime/library';
+import * as mlService from './ml.service';
 
 // ============================================================================
-// HELPER: SERIALIZE INVOICE (Convert decimal to number)
+// HELPER: SERIALIZE INVOICE (Convert Prisma.Decimal to number)
 // ============================================================================
 const serializeInvoice = (invoice: any): Invoice => {
     return {
         ...invoice,
-        amount: invoice.amount instanceof Decimal ? invoice.amount.toNumber() : invoice.amount,
+        amount: invoice.amount instanceof Prisma.Decimal ? invoice.amount.toNumber() : invoice.amount,
         items: invoice.items,
     };
 };
@@ -37,7 +38,7 @@ const serializeInvoice = (invoice: any): Invoice => {
 const serializeInvoiceWithClient = (invoice: any): InvoiceWithClient => {
     return {
         ...invoice,
-        amount: invoice.amount instanceof Decimal ? invoice.amount.toNumber() : invoice.amount,
+        amount: invoice.amount instanceof Prisma.Decimal ? invoice.amount.toNumber() : invoice.amount,
         items: invoice.items,
     };
 };
@@ -45,7 +46,7 @@ const serializeInvoiceWithClient = (invoice: any): InvoiceWithClient => {
 const serializeInvoiceWithDetails = (invoice: any): InvoiceWithDetails => {
     return {
         ...invoice,
-        amount: invoice.amount instanceof Decimal ? invoice.amount.toNumber() : invoice.amount,
+        amount: invoice.amount instanceof Prisma.Decimal ? invoice.amount.toNumber() : invoice.amount,
         items: invoice.items,
     };
 };
@@ -84,6 +85,7 @@ export const createInvoice = async (
     data: CreateInvoiceRequest
 ): Promise<CreateInvoiceResponse> => {
     try {
+        // 1. Verify client exists
         const client = await db.client.findUnique({
             where: { id: data.clientId }
         });
@@ -92,10 +94,10 @@ export const createInvoice = async (
             throw new NotFoundError('Client not found');
         }
 
-        //generate invoice number
+        // 2. Generate invoice number
         const invoiceNumber = await generateInvoiceNumber(userId);
 
-        //create invoice 
+        // 3. Create invoice 
         const invoice = await db.invoice.create({
             data: {
                 userId,
@@ -110,17 +112,65 @@ export const createInvoice = async (
             }
         });
 
-            logger.info('Invoice created', {
-                userId,
-                invoiceId: invoice.id,
-                invoiceNumber: invoice.invoiceNumber,
-                amount: invoice.amount.toString()
+        // 4. Get client payment history for ML prediction
+        const clientInvoices = await db.invoice.findMany({
+            where: {
+                clientId: data.clientId,
+                status: 'paid',
+                paidDate: { not: null },
+            },
+            select: {
+                issueDate: true,
+                paidDate: true,
+            },
+        });
+
+        // 5. Calculate client stats and get ML prediction
+        const stats = calculateClientStats(clientInvoices);
+
+        // 6. Call ML API if client has payment history
+        if (stats.totalInvoices > 0) {
+            const prediction = await mlService.predictPaymentTime({
+                client_avg_payment_days: stats.avgPaymentDays,
+                client_late_payment_rate: stats.latePaymentRate,
+                client_payment_std: stats.paymentStd,
+                client_total_invoices: stats.totalInvoices,
+                client_payment_trend: stats.paymentTrend,
+                amount: data.amount,
+                issue_date: new Date().toISOString(),
             });
+
+            // 7. Store prediction if ML service returned data
+            if (prediction) {
+                await db.invoice.update({
+                    where: { id: invoice.id },
+                    data: {
+                        predictedPaymentDays: prediction.predicted_payment_days,
+                        predictionConfidence: prediction.confidence_score,
+                        predictedPaymentDate: new Date(prediction.predicted_payment_date),
+                    },
+                });
                 
-            return {
-                invoice: serializeInvoice(invoice),
-                message: 'Invoice created successfully'
-            };
+                logger.info('ML prediction added to invoice', {
+                    userId,
+                    invoiceId: invoice.id,
+                    predictedDays: prediction.predicted_payment_days,
+                    confidence: prediction.confidence_score,
+                });
+            }
+        }
+
+        logger.info('Invoice created', {
+            userId,
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            amount: invoice.amount.toString()
+        });
+                
+        return {
+            invoice: serializeInvoice(invoice),
+            message: 'Invoice created successfully'
+        };
     } catch (error) {
         logger.error('Failed to create invoice', { userId, error });
         throw error;
@@ -388,7 +438,7 @@ export const markInvoiceAsPaid = async (
             invoice: serializeInvoice(result.invoice),
             income: {
                 id: result.income.id,
-                amount: result.income.amount instanceof Decimal ? result.income.amount.toNumber() : Number(result.income.amount),
+                amount: result.income.amount instanceof Prisma.Decimal ? result.income.amount.toNumber() : Number(result.income.amount),
                 loggedAt: result.income.loggedAt
             },
             message: 'Invoice marked as paid and income logged successfully'
@@ -523,4 +573,72 @@ export const getInvoiceEmailTemplate = async (
         });
         throw error;
     }
+};
+
+// ============================================================================
+// HELPER: Calculate Client Payment Statistics
+// ============================================================================
+
+const calculateClientStats = (
+    invoices: { issueDate: Date; paidDate: Date | null }[]
+): ClientStats => {
+  // Return zeros if no payment history
+    if (invoices.length === 0) {
+        return {
+            avgPaymentDays: 0,
+            latePaymentRate: 0,
+            paymentStd: 0,
+            totalInvoices: 0,
+            paymentTrend: 0,
+        };
+    }
+
+    // Calculate payment days for each invoice
+    const paymentDays = invoices
+        .filter((inv) => inv.paidDate !== null)
+        .map((inv) => {
+            const days = Math.floor(
+                (new Date(inv.paidDate!).getTime() - new Date(inv.issueDate).getTime()) /
+                (1000 * 60 * 60 * 24)
+            );
+            return days;
+        });
+
+    if (paymentDays.length === 0) {
+        return {
+            avgPaymentDays: 0,
+            latePaymentRate: 0,
+            paymentStd: 0,
+            totalInvoices: 0,
+            paymentTrend: 0,
+            };
+    }
+
+    // Calculate average payment days
+    const avgPaymentDays = 
+        paymentDays.reduce((sum, days) => sum + days, 0) / paymentDays.length;
+
+    // Calculate late payment rate (assuming 30 days is the due date)
+    const lateCount = paymentDays.filter((days) => days > 30).length;
+    const latePaymentRate = lateCount / paymentDays.length;
+
+    // Calculate standard deviation
+    const variance =
+        paymentDays.reduce((sum, days) => sum + Math.pow(days - avgPaymentDays, 2), 0) /
+        paymentDays.length;
+    const paymentStd = Math.sqrt(variance);
+
+    // Calculate payment trend (recent vs historical average)
+    const recentCount = Math.min(5, paymentDays.length);
+    const recentDays = paymentDays.slice(-recentCount);
+    const recentAvg = recentDays.reduce((sum, days) => sum + days, 0) / recentCount;
+    const paymentTrend = avgPaymentDays - recentAvg; // Positive = improving
+
+    return {
+        avgPaymentDays,
+        latePaymentRate,
+        paymentStd,
+        totalInvoices: paymentDays.length,
+        paymentTrend,
+    };
 };
