@@ -3,8 +3,6 @@
  * Defines data structures for invoice tracking
  */
 
-import { Decimal } from "@prisma/client/runtime/library";
-
 // ============================================================================
 // INVOICE STATUSES
 // ============================================================================
@@ -192,4 +190,15 @@ export interface InvoiceSummary {
     overdue: number;
     cancelled: number;
   };
+}
+
+// ============================================================================
+// CLIENT STATS
+// ============================================================================
+export interface ClientStats {
+  avgPaymentDays: number;
+  latePaymentRate: number;
+  paymentStd: number;
+  totalInvoices: number;
+  paymentTrend: number;
 }
