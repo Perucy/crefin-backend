@@ -149,12 +149,16 @@ app.use((req: Request, res: Response) => {
     res.status(404).json({
         success: false,
         error: {
-        code: 'ROUTE_NOT_FOUND',
-        message: `Cannot ${req.method} ${req.path}`,
-        availableRoutes: [
-            `${API_PREFIX}/auth`,
-            // Add more as you build them
-        ],
+            code: 'ROUTE_NOT_FOUND',
+            message: `Cannot ${req.method} ${req.path}`,
+            availableRoutes: [
+                `${API_PREFIX}/auth`,
+                `${API_PREFIX}/users`,
+                `${API_PREFIX}/dashboard`,
+                `${API_PREFIX}/goals`,
+                `${API_PREFIX}/clients`,
+                `${API_PREFIX}/invoices`,
+            ],
         },
     });
 });
