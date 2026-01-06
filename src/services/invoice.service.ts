@@ -166,9 +166,13 @@ export const createInvoice = async (
             invoiceNumber: invoice.invoiceNumber,
             amount: invoice.amount.toString()
         });
+
+        const updatedInvoice = await db.invoice.findUnique({
+            where: { id: invoice.id }
+        });
                 
         return {
-            invoice: serializeInvoice(invoice),
+            invoice: serializeInvoice(updatedInvoice),
             message: 'Invoice created successfully'
         };
     } catch (error) {
