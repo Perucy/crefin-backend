@@ -31,7 +31,7 @@ export const createInvoiceSchema = z.object({
     amount: z.number().positive('Amount must be positive'),
     description: z.string().min(1, 'Description is required'),
     items: z.array(lineItemSchema).optional(),
-    dueDate: z.string().datetime().or(z.date()),
+    dueDate: z.coerce.date(), 
     notes: z.string().optional(),
     terms: z.string().optional(),
 });
@@ -44,7 +44,7 @@ export const updateInvoiceSchema = z.object({
     amount: z.number().positive('Amount must be positive').optional(),
     description: z.string().min(1, 'Description is required').optional(),
     items: z.array(lineItemSchema).optional(),
-    dueDate: z.string().datetime().or(z.date()).optional(),
+    dueDate: z.coerce.date().optional(), // ✅ FIXED
     notes: z.string().optional(),
     terms: z.string().optional(),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']).optional(),
@@ -68,7 +68,7 @@ export const getInvoicesQuerySchema = z.object({
 // ============================================================================
 
 export const markInvoiceAsPaidSchema = z.object({
-    paidDate: z.string().datetime().or(z.date()),
+    paidDate: z.coerce.date(), // ✅ FIXED
     notes: z.string().optional(),
 });
 
