@@ -17,6 +17,8 @@ export const validate = (schema: ZodSchema) => {
         try {
             // Validate request body against schema
             schema.parse(req.body);
+
+            
             
             // If validation passes, continue to next middleware
             next();
