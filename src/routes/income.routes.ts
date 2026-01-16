@@ -20,7 +20,9 @@ export const logIncomeSchema = z.object({
     ratePerHour: z.number().positive('Rate per hour must be positive').optional(),
     source: z.enum(['manual', 'voice']).optional(),
     notes: z.string().optional(),
-    loggedAt: z.string().datetime().or(z.date()).optional(),
+    loggedAt: z.string()
+                .transform((val) => new Date(val).toISOString())
+                .optional(),
 });
 
 export const getIncomeQuerySchema = z.object({
