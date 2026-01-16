@@ -28,6 +28,8 @@ export const logIncome = async (
 
         const data: LogIncomeRequest = req.body;
 
+        console.log('Received loggedAt value:', data.loggedAt, 'Type:', typeof data.loggedAt);
+
         const result = await incomeService.logIncome(userId, data);
 
         sendSuccess(res, result, result.message);
