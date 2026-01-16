@@ -21,7 +21,9 @@ export const logExpenseSchema = z.object({
     description: z.string().min(1, 'Description is required'),
     isDeductible: z.boolean().optional(),
     receiptUrl: z.string().url('Invalid receipt URL').optional(),
-    loggedAt: z.string().datetime().optional().or(z.date().optional()),
+    loggedAt: z.string()
+                .transform((val) => new Date(val).toISOString())
+                .optional(),
 });
 
 export const getExpenseQuerySchema = z.object({
