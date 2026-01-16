@@ -190,14 +190,61 @@ export const getQuickStats = async (userId: string): Promise<QuickStats> => {
 };
 
 // ============================================================================
+// GET MONTHLY REVENUE DATA (LAST 3 MONTHS)
+// ============================================================================
+
+export const getMonthlyData = async (userId: string, months: number = 3) => {
+    try {
+        const result = [];
+        const now = new Date();
+
+        for (let i = months - 1; i >= 0; i--) {
+            const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+            const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0, 23, 59, 59);
+
+            const [incomeData, expenseData] = await Promise.all([
+                db.incomeLog.aggregate({
+                    where: {
+                        userId,
+                        loggedAt: { gte: startDate, lte: endDate }
+                    },
+                    _sum: { amount: true }
+                }),
+                db.expenseLog.aggregate({
+                    where: {
+                        userId,
+                        loggedAt: { gte: startDate, lte: endDate }
+                    },
+                    _sum: { amount: true }
+                })
+            ]);
+
+            result.push({
+                month: targetDate.toLocaleString('en-US', { month: 'short' }),
+                year: targetDate.getFullYear(),
+                income: Number(incomeData._sum.amount || 0),
+                expenses: Number(expenseData._sum.amount || 0),
+            });
+        }
+
+        return result;
+    } catch (error) {
+        logger.error('Failed to get monthly data', { error, userId });
+        throw error;
+    }
+};
+
+// ============================================================================
 // GET DASHBOARD SUMMARY (COMBINED)
 // ============================================================================
 
 export const getDashboardSummary = async (userId: string): Promise<DashboardSummary> => {
     try {
-        const [balance, stats] = await Promise.all([
+        const [balance, stats, monthlyData] = await Promise.all([
             getDashboardBalance(userId),
             getQuickStats(userId),
+            getMonthlyData(userId, 3), 
         ]);
 
         logger.info('Dashboard summary retrieved', { userId });
@@ -205,9 +252,11 @@ export const getDashboardSummary = async (userId: string): Promise<DashboardSumm
         return {
             balance,
             stats,
+            monthlyData,  
         };
     } catch (error) {
         logger.error('Failed to get dashboard summary', { error, userId });
         throw error;
     }
 };
+
