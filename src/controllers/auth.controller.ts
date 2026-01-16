@@ -187,13 +187,16 @@ export const getCurrentUser = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const user = (req as any).user;
+        const userId = (req as any).user?.id;
 
-        if (!user) {
+        if (!userId) {
             return sendError(res, 'User not authenticated', 401);
         }
 
-        sendSuccess(res, { user }, 'User retrieved successfully');
+        const result = await authService.currentUser(userId);
+
+
+        sendSuccess(res, result, 'User retrieved successfully');
     } catch (error) {
         next(error);
     }
