@@ -183,6 +183,37 @@ export const login = async (data: LoginRequest): Promise<AuthResult> => {
 };
 
 // ============================================================================
+// CURRENT USER
+// ============================================================================
+
+export const currentUser = async (userId: string): Promise<AuthResult> => {
+    try {
+        // Find user by ID
+        const user = await db.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundError('User not found');
+        }
+
+        logger.info('Current user retrieved', { userId });
+
+        // Return sanitized user (no password, tokens, etc.)
+        return {
+            success: true,
+            user: sanitizeUser(user),
+            message: 'User retrieved successfully',
+        };
+        
+    } catch (error) {
+        logger.error('Failed to get current user', { error, userId });
+        throw error;
+    }
+
+}
+
+// ============================================================================
 // EMAIL VERIFICATION
 // ============================================================================
 
