@@ -40,8 +40,15 @@ export interface QuickStats {
         totalTransactions: number;
     };
 }
+export interface MonthlyDataPoint {
+    month: string;
+    year: number;
+    income: number;
+    expenses: number;
+}
 
 export interface DashboardSummary {
     balance: DashboardBalance;
     stats: QuickStats;
+    monthlyData: MonthlyDataPoint[];
 }
